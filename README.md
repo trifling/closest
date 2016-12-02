@@ -35,8 +35,7 @@ using the cull, cell and brute-force methods.
    int d_cull[k];
    /* cull_knearest returns 
         in i_cull, the index for the points in the `data` array of the k-nearest neighbors to x */
-        in d_cull, the distances for those same points to x 
-   */
+        in d_cull, the distances for those same points to x */
    cull_knearest( cull, x, k, i_cull, d_cull ); 
    cull_free(cull);
 
@@ -51,8 +50,7 @@ using the cull, cell and brute-force methods.
    int d_cell[k];
    /* cell_knearest returns 
         in i_cell, the index for the points in the `data` array of the k-nearest neighbors to x */
-        in d_cell, the distances for those same points to x 
-   */
+        in d_cell, the distances for those same points to x */
    cell_knearest( cell, x, k, i_cell, d_cell ); 
    cell_free(cell);
 
