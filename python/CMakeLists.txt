@@ -15,18 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with closest. If not, see <http://www.gnu.org/licenses/>.
  
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.5)
-
-PROJECT( closest C )
-
-SET(VERSION 1.0.0)
-
-SET(CMAKE_BUILD_TYPE Release)
-
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(python)
-
-ENABLE_TESTING()
-
-ADD_SUBDIRECTORY(test)
+# use python setup.py to handle the python module when installing
+FIND_PROGRAM(PYTHON "python")
+IF(PYTHON)
+    INSTALL(CODE "MESSAGE( \"-- Installing: python bindings\" )")
+    INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/python/setup.py 
+                  --quiet build --build-base ${CMAKE_CURRENT_BINARY_DIR} install 
+                  --prefix ${CMAKE_INSTALL_PREFIX} 
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python)")
+ENDIF()
 

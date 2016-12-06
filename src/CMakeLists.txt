@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with closest. If not, see <http://www.gnu.org/licenses/>.
   
-add_library(closest closest.h auxf.c cell.c cull.c brut.c)
+add_library(closest SHARED closest.h auxf.c cell.c cull.c brut.c)
 
 install( TARGETS closest DESTINATION lib)
 install( FILES closest.h DESTINATION include)
