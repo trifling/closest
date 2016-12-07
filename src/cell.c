@@ -52,7 +52,7 @@ cell_t *cell_init( int nd, int ni, int nr, double *xi ) {
       c->nr = pow( (double)ni/3.0, 1.0/(double)nd ); 
    else 
       c->nr = nr;
-   c->stride = calloc( ni, sizeof(int) );
+   c->stride = calloc( nd, sizeof(int) );
    c->stride[0] = 1;
    for( int k=1; k<nd; k++ )
       c->stride[k] = c->stride[k-1]*c->nr;
