@@ -20,6 +20,10 @@
 #ifndef CLOSEST_H
 #define CLOSEST_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
    double *xi;
    int *bmap;
@@ -57,6 +61,25 @@ int cell_knearest( cell_t *c, double *x, int no, int *index, double *distance );
 void cell_free( cell_t *c );
 
 int bruteforce_knearest( int nd, int ni, double *xi, double *x, int no, int *index, double *distance );
+
+#ifdef __cplusplus
+}
+
+class Closest {
+public:
+   Closest( int nd, int ni, double *xi );
+   ~Closest();
+   int cell( double *x, int no, int *idx, double *dst );
+   int cull( double *x, int no, int *idx, double *dst );
+   int bruteforce( double *x, int no, int *idx, double *dst );
+private:
+   cell_t *m_cell;
+   cull_t *m_cull;
+   int m_nd, m_ni;
+   double *m_xi; 
+};
+
+#endif
 
 #endif /* CLOSEST_H */
 

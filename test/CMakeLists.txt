@@ -15,13 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with closest. If not, see <http://www.gnu.org/licenses/>.
  
-set(CMAKE_BUILD_TYPE Release)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src)
 
-include_directories(${CMAKE_SOURCE_DIR}/src)
+ADD_EXECUTABLE( closest_test test.c )
+TARGET_LINK_LIBRARIES( closest_test LINK_PUBLIC closest m )
 
-add_executable( closest_test test.c )
-target_link_libraries( closest_test LINK_PUBLIC closest m )
+ADD_EXECUTABLE( closest_test_cxx test_cxx.cpp )
+TARGET_LINK_LIBRARIES( closest_test_cxx LINK_PUBLIC closest closest_cxx m )
 
-add_executable( closest_timing timing.c kdtree.c )
-target_link_libraries( closest_timing LINK_PUBLIC closest m )
+ADD_EXECUTABLE( closest_timing timing.c kdtree.c )
+TARGET_LINK_LIBRARIES( closest_timing LINK_PUBLIC closest m )
+
 

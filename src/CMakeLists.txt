@@ -20,3 +20,6 @@ add_library(closest SHARED closest.h auxf.c cell.c cull.c brut.c)
 install( TARGETS closest DESTINATION lib)
 install( FILES closest.h DESTINATION include)
 
+add_library(closest_cxx SHARED iface.cpp closest.h )
+install( TARGETS closest_cxx DESTINATION lib)
+
