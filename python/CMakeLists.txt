@@ -19,9 +19,9 @@
 FIND_PROGRAM(PYTHON "python")
 IF(PYTHON)
     INSTALL(CODE "MESSAGE( \"-- Installing: python bindings\" )")
-    INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/python/setup.py 
+    INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${PYTHON} ${CMAKE_CURRENT_SOURCE_DIR}/setup.py 
                   --quiet build --build-base ${CMAKE_CURRENT_BINARY_DIR} install 
                   --prefix ${CMAKE_INSTALL_PREFIX} 
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python)")
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})")
 ENDIF()
 
