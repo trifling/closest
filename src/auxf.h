@@ -33,6 +33,36 @@
 #define MIN(x,y) (((x) < (y) ? (x) : (y)))
 #endif
 
+/* types */
+struct cull_s {
+   double *xi;
+   int *bmap;
+   int *fmap;
+   double *oset;
+   int ni;
+   int nd;
+   double *llim;
+   double *ulim;
+   double *side;
+   int *ix;
+   int *lst;
+   double *lrs;
+   char *use;
+   double probability;
+   double eps;
+};
+
+struct cell_s {
+   int nd, ni, nr, nc;
+   int *stride; 
+   int *cell;   
+   int *next;   
+   double *xi;
+   double *xmin;
+   double *xmax;
+   double *xdel;
+};
+
 /* ranking functions */
 typedef struct {
    int index;

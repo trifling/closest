@@ -24,38 +24,14 @@
 extern "C" {
 #endif
 
-typedef struct {
-   double *xi;
-   int *bmap;
-   int *fmap;
-   double *oset;
-   int ni;
-   int nd;
-   double *llim;
-   double *ulim;
-   double *side;
-   int *ix;
-   int *lst;
-   double *lrs;
-   char *use;
-   double probability;
-   double eps;
-} cull_t;
+typedef struct cull_s cull_t;
+typedef struct cell_s cell_t;
+
 cull_t *cull_init( int nd, int ni, double *xi );
 void cull_set_probability( cull_t *cull, double probability );
 int cull_knearest( cull_t *cull, double *x, int no, int *index, double *distance );
 void cull_free( cull_t *cull );
 
-typedef struct {
-   int nd, ni, nr, nc;
-   int *stride; 
-   int *cell;   
-   int *next;   
-   double *xi;
-   double *xmin;
-   double *xmax;
-   double *xdel;
-} cell_t;
 cell_t *cell_init( int nd, int ni, int nr, double *xi );
 int cell_knearest( cell_t *c, double *x, int no, int *index, double *distance );
 void cell_free( cell_t *c );
