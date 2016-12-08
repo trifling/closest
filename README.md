@@ -65,7 +65,7 @@ using the cull, cell and brute-force methods.
 
 # Build and install
 
-Closest uses cmake as buld system. To build and install a dynamic version of closest in /usr/local:
+Closest uses cmake as build system. To build and install a dynamic version of closest in /usr/local:
 
 ```bash
 $ mkdir bld && cd bld && cmake -DCMAKE_INSTALL_PREFIX=/usr/local ../ && make && make install && cd ..
