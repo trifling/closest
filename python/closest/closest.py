@@ -30,8 +30,15 @@ if not lpath:
         lpath = os.path.join( os.environ['CLOSEST_PATH'], 'libclosest.so' )
     except:
         pass
+    try:
+        for root in os.environ['LD_LIBRARY_PATH'].split(':'):
+            lpath = os.path.join( root, 'libclosest.so' )
+            if os.path.isfile(lpath):
+                break
+    except:
+        pass
 
-if not lpath:
+if not lpath or not os.path.isfile(lpath):
     raise RuntimeError( 'could not locate the closest library, please set CLOSEST_PATH to the valid location')
 
 _closest = CDLL( lpath )
