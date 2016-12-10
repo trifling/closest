@@ -52,7 +52,7 @@ int timing_test( int nd, int ni, int no, int nr, double *t ) {
    start = clock();
    cull_t *cull = cull_init( nd, ni, xi ); 
    for( int i=0; i<nr; i++ ) {
-      int n = cull_knearest( cull, x+i*nd, no, idx, dst ); 
+      cull_knearest( cull, x+i*nd, no, idx, dst ); 
    }
    cull_free(cull);
    end = clock();
@@ -62,7 +62,7 @@ int timing_test( int nd, int ni, int no, int nr, double *t ) {
    start = clock();
    cell_t *cell = cell_init( nd, ni, -1, xi ); 
    for( int i=0; i<nr; i++ ) {
-      int n = cell_knearest( cell, x+i*nd, no, idx, dst ); 
+      cell_knearest( cell, x+i*nd, no, idx, dst ); 
    }
    cell_free(cell);
    end = clock();
@@ -71,7 +71,7 @@ int timing_test( int nd, int ni, int no, int nr, double *t ) {
    /* time bruteforce method */
    start = clock();
    for( int i=0; i<nr; i++ ) {
-      int n = bruteforce_knearest( nd, ni, xi, x+i*nd, no, idx, dst ); 
+      bruteforce_knearest( nd, ni, xi, x+i*nd, no, idx, dst ); 
    }
    end = clock();
    t[2] = ((double) (end - start)) / CLOCKS_PER_SEC;

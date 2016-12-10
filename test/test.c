@@ -67,9 +67,9 @@ int random_test( int nd, int ni, int no, int nr ) {
          x[k] = tmp;
       }
          
-      int n_cell = cell_knearest( cell, x, no, i_cell, d_cell ); 
-      int n_cull = cull_knearest( cull, x, no, i_cull, d_cull ); 
-      int n_brut = bruteforce_knearest( nd, ni, xi, x, no, i_brut, d_brut ); 
+      cell_knearest( cell, x, no, i_cell, d_cell ); 
+      cull_knearest( cull, x, no, i_cull, d_cull ); 
+      bruteforce_knearest( nd, ni, xi, x, no, i_brut, d_brut ); 
 
       for( int l=0; l<no; l++ ) {
          if( i_cull[l] != i_brut[l] || i_cell[l] != i_brut[l] ) {

@@ -112,7 +112,7 @@ void cell_free( cell_t *c ) {
    c = NULL;
 }
 
-int static cell_next_nearest( cell_t *c, double *x, double *d ) {
+static int cell_next_nearest( cell_t *c, double *x, double *d ) {
 
   
    double delx[c->nd];

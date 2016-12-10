@@ -36,12 +36,12 @@
 #endif
 
 /* uniform distribution epsilon for a sphere: for np points it needs multiplying by pow(np,1/nd) */
-static double hsphere( int nd, double *ext, int ni, double p ) {
-   double eps = nd*tgamma(nd/2.0)/(2.0*pow(M_PI,nd/2.0))*(1.0-pow(1.0-p,1.0/ni));
-   for( int k=0; k<nd; k++ ) 
-      eps *= ext[k];
-   return pow(eps,1.0/nd);
-}
+/*static double hsphere( int nd, double *ext, int ni, double p ) {*/
+   /*double eps = nd*tgamma(nd/2.0)/(2.0*pow(M_PI,nd/2.0))*(1.0-pow(1.0-p,1.0/ni));*/
+   /*for( int k=0; k<nd; k++ ) */
+      /*eps *= ext[k];*/
+   /*return pow(eps,1.0/nd);*/
+/*}*/
 
 /* uniform distribution epsilon for a cube: for np points it needs multiplying by pow(np,1/nd) */
 static double hcube( int nd, double *ext, int ni, double p ) {
@@ -54,7 +54,6 @@ static double hcube( int nd, double *ext, int ni, double p ) {
 /* pre-process the node set to obtain an ordered set, along with a forward and backwards mapping. */
 cull_t *cull_init(  int nd, int ni, double *xi ) { 
    
-   time_t start, end;
    cull_t *cls; 
    cls = malloc( sizeof(cull_t) ); 
    cls->nd = nd; 
