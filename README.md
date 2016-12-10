@@ -1,3 +1,7 @@
+
+![travis-ci](https://travis-ci.org/trifling/closest.svg?branch=master)
+
+
 # Closest 
  
 A C library for the k-nearest neighbor search optimization problem in N-dimensions. 
