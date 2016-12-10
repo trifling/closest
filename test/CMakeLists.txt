@@ -21,7 +21,7 @@ ADD_EXECUTABLE( closest_test test.c )
 TARGET_LINK_LIBRARIES( closest_test LINK_PUBLIC closest m )
 
 ADD_EXECUTABLE( closest_test_cxx test_cxx.cpp )
-TARGET_LINK_LIBRARIES( closest_test_cxx LINK_PUBLIC closest closest_cxx m )
+TARGET_LINK_LIBRARIES( closest_test_cxx LINK_PUBLIC closest_cxx closest m )
 
 ADD_EXECUTABLE( closest_timing timing.c kdtree.c )
 TARGET_LINK_LIBRARIES( closest_timing LINK_PUBLIC closest m )
