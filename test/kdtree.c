@@ -31,6 +31,7 @@ OF SUCH DAMAGE.
 #endif
 
 #include <stdio.h>
+#include <alloca.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>

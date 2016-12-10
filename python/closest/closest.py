@@ -1,54 +1,46 @@
-#  
-#  This file is part of closest, a library for cull-based and 
-#  cell-based spatial search of k-nearest neighbors in n-dimensions.
+#  This file is part of closest, a library for k-nearest neighbors (kNN) search
+#  in n-dimensions.  
 #  Copyright (C) 2011-2016 Daniel Pena <trifling.github@gmail.com>
 #
-#  Closest is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
+#  Closest is free software: you can redistribute it and/or modify it under the
+#  terms of the GNU General Public License as published by the Free Software
+#  Foundation, either version 3 of the License, or (at your option) any later
+#  version.
 #
-#  Closest is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
+#  Closest is distributed in the hope that it will be useful, but WITHOUT ANY
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+#  FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+#  details.
 #
-#  You should have received a copy of the GNU General Public License
-#  along with closest. If not, see <http://www.gnu.org/licenses/>.
-# 
+#  You should have received a copy of the GNU General Public License along with
+#  closest. If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as npy
 import os
 
-from ctypes import CDLL, POINTER, c_int, c_double, byref, c_void_p, Structure, util
+from ctypes import CDLL, POINTER, c_int, c_double, byref, c_void_p, Structure, util, CFUNCTYPE, py_object
 from ctypes.util import find_library
 
-found = False
-lpath = find_library( 'closest' )
-if not lpath:
+_found = False
+_lpath = find_library( 'closest' )
+if not _lpath:
     try:
-        lpath = os.path.join( os.environ['CLOSEST_PATH'], 'libclosest.so' )
+        _lpath = os.path.join( os.environ['CLOSEST_PATH'], 'libclosest.so' )
     except:
         pass
     try:
         for root in os.environ['LD_LIBRARY_PATH'].split(':'):
-            lpath = os.path.join( root, 'libclosest.so' )
-            if os.path.isfile(lpath):
+            _lpath = os.path.join( root, 'libclosest.so' )
+            if os.path.isfile(_lpath):
                 break
     except:
         pass
 
-if not lpath or not os.path.isfile(lpath):
+if not _lpath or not os.path.isfile(_lpath):
     raise RuntimeError( 'could not locate the closest library, please set CLOSEST_PATH to the valid location')
 
-_closest = CDLL( lpath )
+_closest = CDLL( _lpath )
 
-_cell_init = _closest.cell_init
-_cell_init.restype = c_void_p
-_cell_knearest = _closest.cell_knearest
-_cell_knearest.restype = c_int
-_cell_free = _closest.cell_free
-_cell_free.restype = None
 
 _cull_init = _closest.cull_init
 _cull_init.restype = c_void_p
@@ -56,74 +48,151 @@ _cull_knearest = _closest.cull_knearest
 _cull_knearest.restype = c_int
 _cull_free = _closest.cull_free
 _cull_free.restype = None
+_cull_set_metric = _closest.cull_set_metric
+_cull_set_metric.restype = None
 
-_bruteforce_knearest = _closest.bruteforce_knearest
-_bruteforce_knearest.restype = c_int 
+_cell_init = _closest.cell_init
+_cell_init.restype = c_void_p
+_cell_knearest = _closest.cell_knearest
+_cell_knearest.restype = c_int
+_cell_free = _closest.cell_free
+_cell_free.restype = None
+_cell_set_metric = _closest.cell_set_metric
+_cell_set_metric.restype = None
 
-class Cell:
-    def __init__( self, data ):
-        if data.dtype != 'float64':
-            raise TypeError( 'closest Cell class takes only float64 numpy arrays' )
+_brut_init = _closest.brut_init
+_brut_init.restype = c_void_p
+_brut_knearest = _closest.brut_knearest
+_brut_knearest.restype = c_int
+_brut_free = _closest.brut_free
+_brut_free.restype = None
+_brut_set_metric = _closest.brut_set_metric
+_brut_set_metric.restype = None
 
-        self.data = data
-        self.ni = data.shape[0]
-        self.nd = data.shape[1]
+_tree_init = _closest.tree_init
+_tree_init.restype = c_void_p
+_tree_knearest = _closest.tree_knearest
+_tree_knearest.restype = c_int
+_tree_free = _closest.tree_free
+_tree_free.restype = None
+_tree_set_metric = _closest.tree_set_metric
+_tree_set_metric.restype = None
 
-        nr = c_int(-1)
-        nd = c_int(self.nd)
-        ni = c_int(self.ni)
-        pr = data.ctypes.data_as( POINTER(c_double) )
-        self.handle = _cell_init( nd, ni, nr, pr )
+_L1metric = _closest.L1metric
+_L2metric = _closest.L2metric
+_Lpmetric = _closest.Lpmetric
+_LMmetric = _closest.LMmetric
 
-    def __del__( self ):
-        i = _cell_free( self.handle )
+def metric_wrap( py_metric, py_data ): 
+    CDISTANCETYPE  = CFUNCTYPE( c_double, c_int, POINTER(c_double), POINTER(c_double), POINTER(py_object) ) 
+    def c_metric_wrapper( n, px, py, pdata ):
+        x = npy.ctypeslib.as_array(px,shape=(n,)) 
+        y = npy.ctypeslib.as_array(py,shape=(n,)) 
+        data = pdata.contents.value
+        return py_metric( x, y, data )
 
-    def knearest( self, x, n ):
-        no = c_int(n)
-        pr = x.ctypes.data_as( POINTER(c_double) )
-        
-        idx = npy.zeros( n, dtype=npy.int32 )
-        dst = npy.zeros( n, dtype=npy.float64 )
-        
-        pidx = idx.ctypes.data_as(POINTER(c_int))
-        pdst = dst.ctypes.data_as(POINTER(c_double))
+    if py_metric is None:
+        c_fun = None
+        c_data = None
 
-        ret = _cell_knearest( self.handle, pr, no, pidx, pdst )
+    elif type(py_metric)==str:
+        if py_metric == 'L1':
+            c_fun  = _L1metric
+            c_data = None
+        elif py_metric == 'L2':
+            c_fun  = _L2metric
+            c_data = None
+        elif py_metric == 'Lp':
+            c_fun  = _Lpmetric
+            c_data = byref( c_double(py_data) )
+        elif py_metric == 'LM':
+            c_fun  = _LMmetric
+            c_data = py_data.ctypes.data_as(POINTER(c_double))
+        else:
+            raise RuntimeError("Distance function " + py_metric + " not implemented")
+    else:
+        c_fun = CDISTANCETYPE(c_metric_wrapper)
+        c_data = byref( py_object(py_data) )
 
-        return ret, idx, dst
+    return c_fun, c_data
 
 class Cull:
-    def __init__( self, data ):
+    def __init__( self, data, prob = -1 ):
         if data.dtype != 'float64':
             raise TypeError( 'closest Cull class takes only float64 numpy arrays' )
 
         self.data = data
         self.ni = data.shape[0]
         self.nd = data.shape[1]
+        self.prob = prob
 
         nd = c_int(self.nd)
         ni = c_int(self.ni)
         pr = data.ctypes.data_as( POINTER(c_double) )
-        self.handle = _cull_init( nd, ni, pr )
+        ii = c_int(self.prob)
+        self.handle = _cull_init( nd, ni, pr, ii )
 
     def __del__( self ):
         i = _cull_free( self.handle )
 
-    def knearest( self, x, n ):
-        no = c_int(n)
-        pr = x.ctypes.data_as( POINTER(c_double) )
+    def knearest( self, x, n, metric = None, distdata = None ):
         
-        idx = npy.zeros( n, dtype=npy.int32 )
-        dst = npy.zeros( n, dtype=npy.float64 )
+        Lfun, Ldata = metric_wrap( metric, distdata )
+        _cull_set_metric( self.handle, Lfun, Ldata )
+
+        xx = x.flatten() # force numpy to put it in memory in (nd,nq) order
+        nq = c_int( int( xx.size/self.nd ) )
+        xq = xx.ctypes.data_as( POINTER(c_double) )
+        no = c_int(n)
+        idx = npy.zeros( (nq.value,no.value), dtype=npy.int32   )
+        dst = npy.zeros( (nq.value,no.value), dtype=npy.float64 )
         
         pidx = idx.ctypes.data_as(POINTER(c_int))
         pdst = dst.ctypes.data_as(POINTER(c_double))
 
-        ret = _cull_knearest( self.handle, pr, no, pidx, pdst )
+        ret = _cull_knearest( self.handle, nq, xq, no, pidx, pdst )
+        
+        return idx, dst 
 
-        return ret, idx, dst
+class Cell:
+    def __init__( self, data, ncpd = -1 ):
+        if data.dtype != 'float64':
+            raise TypeError( 'closest Cell class takes only float64 numpy arrays' )
 
-class Bruteforce:
+        self.data = data
+        self.ni = data.shape[0]
+        self.nd = data.shape[1]
+        self.ncpd = ncpd
+
+        nd = c_int(self.nd)
+        ni = c_int(self.ni)
+        pr = data.ctypes.data_as( POINTER(c_double) )
+        ii = c_int(self.ncpd)
+        self.handle = _cell_init( nd, ni, pr, ii )
+
+    def __del__( self ):
+        i = _cell_free( self.handle )
+
+    def knearest( self, x, n, metric = None, distdata = None ):
+        
+        Lfun, Ldata = metric_wrap( metric, distdata )
+        _cell_set_metric( self.handle, Lfun, Ldata )
+
+        xx = x.flatten() # force numpy to put it in memory in (nd,nq) order
+        nq = c_int( int( xx.size/self.nd ) )
+        xq = xx.ctypes.data_as( POINTER(c_double) )
+        no = c_int(n)
+        idx = npy.zeros( (nq.value,no.value), dtype=npy.int32   )
+        dst = npy.zeros( (nq.value,no.value), dtype=npy.float64 )
+        
+        pidx = idx.ctypes.data_as(POINTER(c_int))
+        pdst = dst.ctypes.data_as(POINTER(c_double))
+
+        ret = _cell_knearest( self.handle, nq, xq, no, pidx, pdst )
+        
+        return idx, dst 
+
+class Brut:
     def __init__( self, data ):
         if data.dtype != 'float64':
             raise TypeError( 'closest Bruteforce class takes only float64 numpy arrays' )
@@ -132,48 +201,68 @@ class Bruteforce:
         self.ni = data.shape[0]
         self.nd = data.shape[1]
 
-    def knearest( self, x, n ):
+        nd = c_int(self.nd)
+        ni = c_int(self.ni)
+        pr = data.ctypes.data_as( POINTER(c_double) )
+        self.handle = _brut_init( nd, ni, pr )
+
+    def __del__( self ):
+        i = _brut_free( self.handle )
+
+    def knearest( self, x, n, metric = None, distdata = None ):
+
+        Lfun, Ldata = metric_wrap( metric, distdata )
+        _brut_set_metric( self.handle, Lfun, Ldata )
+
+        xx = x.flatten() # force numpy to put it in memory in (nd,nq) order
+        nq = c_int( int( xx.size/self.nd ) )
+        xq = xx.ctypes.data_as( POINTER(c_double) )
+        no = c_int(n)
+        idx = npy.zeros( (nq.value,no.value), dtype=npy.int32   )
+        dst = npy.zeros( (nq.value,no.value), dtype=npy.float64 )
+ 
+        pidx = idx.ctypes.data_as(POINTER(c_int))
+        pdst = dst.ctypes.data_as(POINTER(c_double))
+
+        ret = _brut_knearest( self.handle, nq, xq, no, pidx, pdst )
+
+        return idx, dst 
+
+class Tree:
+    def __init__( self, data, ppn = -1 ):
+        if data.dtype != 'float64':
+            raise TypeError( 'closest Tree class takes only float64 numpy arrays' )
+
+        self.data = data
+        self.ni = data.shape[0]
+        self.nd = data.shape[1]
+        self.ppn = ppn
 
         nd = c_int(self.nd)
         ni = c_int(self.ni)
-        xi = self.data.ctypes.data_as( POINTER(c_double) )
+        pr = data.ctypes.data_as( POINTER(c_double) )
+        ii = c_int(self.ppn)
+        self.handle = _tree_init( nd, ni, pr, ii )
 
-        no = c_int(n)
-        pr = x.ctypes.data_as( POINTER(c_double) )
+    def __del__( self ):
+        i = _tree_free( self.handle )
+
+    def knearest( self, x, n, metric = None, distdata = None ):
         
-        idx = npy.zeros( n, dtype=npy.int32 )
-        dst = npy.zeros( n, dtype=npy.float64 )
+        Lfun, Ldata = metric_wrap( metric, distdata )
+        _tree_set_metric( self.handle, Lfun, Ldata )
+
+        xx = x.flatten() # force numpy to put it in memory in (nd,nq) order
+        nq = c_int( int( xx.size/self.nd ) )
+        xq = xx.ctypes.data_as( POINTER(c_double) )
+        no = c_int(n)
+        idx = npy.zeros( (nq.value,no.value), dtype=npy.int32   )
+        dst = npy.zeros( (nq.value,no.value), dtype=npy.float64 )
         
         pidx = idx.ctypes.data_as(POINTER(c_int))
         pdst = dst.ctypes.data_as(POINTER(c_double))
 
-        ret = _bruteforce_knearest( nd, ni, xi, pr, no, pidx, pdst )
-
-        return ret, idx, dst
-
-if __name__ == '__main__':
-    
-    nd = 5
-    ni = 20
-    data = npy.random.rand( ni, nd )
-    x = npy.random.rand( nd )
-    print( 'DATA=')
-    print( data )
-    cell = Cell(data)
-    print()
-    print( '  X=',x )
-    print()
-    ret, idx, dst = cell.knearest( x, 3 )
-    print( 'RET=', ret )
-    print( 'IDX=', idx )
-    print( 'DST=', dst )
-    print( 'LST=' )
-    for i in idx:
-        print( data[i,:] )
-
-    print()
-    bfor = Bruteforce(data)
-    ret, idx, dst = bfor.knearest( x, 3 )
-    for i in idx:
-        print( data[i,:] )
+        ret = _tree_knearest( self.handle, nq, xq, no, pidx, pdst )
+        
+        return idx, dst 
 

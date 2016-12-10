@@ -1,20 +1,20 @@
 /* 
-   This file is part of closest, a library for cull-based and 
-   cell-based spatial search of k-nearest neighbors in n-dimensions.
+   This file is part of closest, a library for k-nearest neighbors (kNN) search
+   in n-dimensions.  
    Copyright (C) 2011-2016 Daniel Pena <trifling.github@gmail.com>
 
-   Closest is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
+   Closest is free software: you can redistribute it and/or modify it under the
+   terms of the GNU General Public License as published by the Free Software
+   Foundation, either version 3 of the License, or (at your option) any later
+   version.
 
-   Closest is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   Closest is distributed in the hope that it will be useful, but WITHOUT ANY
+   WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+   details.
 
-   You should have received a copy of the GNU General Public License
-   along with closest. If not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU General Public License along with
+   closest. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <time.h>
@@ -25,33 +25,32 @@
 #include <closest.h>
 
 int random_test( int nd, int ni, int no, int nr ) {
+   
+   srand(time(NULL));
 
    double *xi = calloc( nd*ni, sizeof(double) );
 
    /* generate random points */
-   struct drand48_data rd;
-   srand(time(NULL));
-   short unsigned int seed16v[3];
-   seed16v[0] = rand();
-   seed16v[1] = rand();
-   seed16v[2] = rand(); 
-   seed48_r( seed16v, &rd );
    for( int i=0; i<ni; i++ ) {
       for( int k=0; k<nd; k++ ) {
-         drand48_r( &rd, xi+k+i*nd );
+         xi[k+i*nd] = (double)rand()/(double)RAND_MAX; 
       }
    }
 
-   cull_t *cull = cull_init( nd, ni, xi ); 
-   cell_t *cell = cell_init( nd, ni, -1, xi );
+   cull_t *cull = cull_init( nd, ni, xi, 0.9 );
+   cell_t *cell = cell_init( nd, ni, xi, 0.0 );
+   brut_t *brut = brut_init( nd, ni, xi );
+   tree_t *tree = tree_init( nd, ni, xi, -1 );
 
    int *i_cull = calloc( no, sizeof(int) );
    int *i_cell = calloc( no, sizeof(int) );
    int *i_brut = calloc( no, sizeof(int) );
+   int *i_tree = calloc( no, sizeof(int) );
    
    double *d_cull = calloc( no, sizeof(double) );
    double *d_cell = calloc( no, sizeof(double) );
    double *d_brut = calloc( no, sizeof(double) );
+   double *d_tree = calloc( no, sizeof(double) );
 
    double *x = calloc( nd, sizeof(double) );
 
@@ -60,19 +59,17 @@ int random_test( int nd, int ni, int no, int nr ) {
    fflush(stdout);
 
    for( int i=0; i<nr; i++ ) {
-
       for( int k=0; k<nd; k++ ) {
-         double tmp;
-         drand48_r( &rd, &tmp );
-         x[k] = tmp;
+         x[k+i*nd] = (double)rand()/(double)RAND_MAX; 
       }
          
-      cell_knearest( cell, x, no, i_cell, d_cell ); 
-      cull_knearest( cull, x, no, i_cull, d_cull ); 
-      bruteforce_knearest( nd, ni, xi, x, no, i_brut, d_brut ); 
+      cull_knearest( cull, 1, x, no, i_cull, d_cull ); 
+      cell_knearest( cell, 1, x, no, i_cell, d_cell ); 
+      brut_knearest( brut, 1, x, no, i_brut, d_brut ); 
+      tree_knearest( tree, 1, x, no, i_tree, d_tree ); 
 
       for( int l=0; l<no; l++ ) {
-         if( i_cull[l] != i_brut[l] || i_cell[l] != i_brut[l] ) {
+         if( i_cell[l] != i_brut[l] || i_cull[l] != i_brut[l] || i_tree[l] != i_brut[l] ) {
             
             fprintf(stderr,"\n\nERROR at iter i=%u!\n", i );
             fprintf(stderr,"X = ( ");
@@ -81,9 +78,10 @@ int random_test( int nd, int ni, int no, int nr ) {
             fprintf(stderr,")\n");
 
             for( int l=0; l<no; l++ ) {
-               fprintf(stderr, "CELL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cell[l], d_cell[l], xi[0+i_cell[l]*nd], xi[1+i_cell[l]*nd] );
                fprintf(stderr, "CULL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cull[l], d_cull[l], xi[0+i_cull[l]*nd], xi[1+i_cull[l]*nd] );
+               fprintf(stderr, "CELL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cell[l], d_cell[l], xi[0+i_cell[l]*nd], xi[1+i_cell[l]*nd] );
                fprintf(stderr, "BRUT %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_brut[l], d_brut[l], xi[0+i_brut[l]*nd], xi[1+i_brut[l]*nd] );
+               fprintf(stderr, "TREE %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_tree[l], d_tree[l], xi[0+i_tree[l]*nd], xi[1+i_tree[l]*nd] );
             }
 
             fprintf(stderr,"Test failed!\n");
@@ -96,12 +94,16 @@ int random_test( int nd, int ni, int no, int nr ) {
    free(i_cull);
    free(i_cell);
    free(i_brut);
+   free(i_tree);
    free(d_cull);
    free(d_cell);
    free(d_brut);
+   free(d_tree);
    free(x);
    cull_free(cull);
    cell_free(cell);
+   brut_free(brut);
+   tree_free(tree);
    printf("  succeeded!\n");
    return 0;
 }
