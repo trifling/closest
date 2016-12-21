@@ -1,26 +1,26 @@
 
 .. image:: https://travis-ci.org/trifling/closest.svg?branch=master
-    :target: https://travis-ci.org/trifling/closest
+   :target: https://travis-ci.org/trifling/closest
 
 .. _`is well documented`: http://trifling-matters.com/closest.html
 .. _`GPL-3.0`: https://opensource.org/licenses/GPL-3.0
 
 Closest README
 ==============
- 
-.. image:: https://travis-ci.org/trifling/closest.svg?branch=master
-   :target: https://travis-ci.org/trifling/closest
 
 A C library for k-nearest neighbor search in N-dimensions with arbitrary
 metric functions. 
 
 Closest:
-- is simple to use but very flexible
+
+- is simple to use
+- is flexible (custom distance functions)
 - provides API interfaces for C, C++ and Python
+- written in ISO C99
 - has no external dependencies
 - is small and fast
-- `is well documented`_
 
+- `is well documented`_
 
 Closest is licensed under the `GPL-3.0`_ (see the LICENSE file for details).
 
