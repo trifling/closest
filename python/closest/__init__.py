@@ -1,3 +1,3 @@
 
-from .closest import Cell, Cull, Bruteforce
+from .closest import Cull, Cell, Brut, Tree
 

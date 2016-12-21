@@ -20,13 +20,27 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <unistd.h>
+#include <float.h>
 #include <closest.h>
+
+double infnorm( int nd, double *x, double *y, void *data ) {
+   /*double f = *(double *)data;*/
+   double t = DBL_MIN;
+   for( int k=0; k<nd; k++ ) {
+      double a = fabs(x[k]-y[k]);
+      if( a > t )
+         t = a;
+   }
+   return t;
+}
 
 int random_test( int nd, int ni, int no, int nr ) {
    
    srand(time(NULL));
 
-   double *xi = new double[nd*ni];
+   double *xi = calloc( nd*ni, sizeof(double) );
 
    /* generate random points */
    for( int i=0; i<ni; i++ ) {
@@ -35,16 +49,16 @@ int random_test( int nd, int ni, int no, int nr ) {
       }
    }
 
-   closest::Cell *cell = new closest::Cell( nd, ni, xi, 0.0 );
-   closest::Brut *brut = new closest::Brut( nd, ni, xi );
+   cell_t *cell = cell_init( nd, ni, xi, 0.0 );
+   brut_t *brut = brut_init( nd, ni, xi );
 
-   int *i_cell = new int[no]; 
-   int *i_brut = new int[no];
+   int *i_cell = calloc( no, sizeof(int) );
+   int *i_brut = calloc( no, sizeof(int) );
    
-   double *d_cell = new double[no];
-   double *d_brut = new double[no];
+   double *d_cell = calloc( no, sizeof(double) );
+   double *d_brut = calloc( no, sizeof(double) );
 
-   double x[nd];
+   double *x = calloc( nd, sizeof(double) );
 
    printf("Performing %d look-ups for the %d closest point(s), in a set of %d points,"
           " to a random point X in %d-dimensional space...", nr, no, ni, nd );
@@ -53,14 +67,17 @@ int random_test( int nd, int ni, int no, int nr ) {
    for( int i=0; i<nr; i++ ) {
 
       for( int k=0; k<nd; k++ ) {
-         x[k] = (double)rand()/(double)RAND_MAX; 
+         x[k+i*nd] = (double)rand()/(double)RAND_MAX; 
       }
-         
-      int n_cell = cell->knearest( 1, x, no, i_cell, d_cell ); 
-      int n_brut = brut->knearest( 1, x, no, i_brut, d_brut ); 
+      
+      brut_set_metric( brut, infnorm, NULL );
+      brut_knearest( brut, 1, x, no, i_brut, d_brut ); 
+
+      cell_set_metric( cell, infnorm, NULL );
+      cell_knearest( cell, 1, x, no, i_cell, d_cell ); 
 
       for( int l=0; l<no; l++ ) {
-         if( i_cell[l] != i_brut[l] ) {
+         if(    i_cell[l] != i_brut[l] ) {
             
             fprintf(stderr,"\n\nERROR at iter i=%u!\n", i );
             fprintf(stderr,"X = ( ");
@@ -69,8 +86,8 @@ int random_test( int nd, int ni, int no, int nr ) {
             fprintf(stderr,")\n");
 
             for( int l=0; l<no; l++ ) {
-               fprintf(stderr, "CELL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cell[l], d_cell[l], xi[0+i_cell[l]*nd], xi[1+i_cell[l]*nd] );
-               fprintf(stderr, "BRUT %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_brut[l], d_brut[l], xi[0+i_brut[l]*nd], xi[1+i_brut[l]*nd] );
+               fprintf(stderr, "CELL %02d -> i=%02d d=%f\n", l, i_cell[l], d_cell[l] );
+               fprintf(stderr, "BRUT %02d -> i=%02d d=%f\n", l, i_brut[l], d_brut[l] );
             }
 
             fprintf(stderr,"Test failed!\n");
@@ -79,13 +96,14 @@ int random_test( int nd, int ni, int no, int nr ) {
       }
    }
 
-   delete xi;
-   delete i_cell;
-   delete i_brut;
-   delete d_cell;
-   delete d_brut;
-   delete cell;
-   delete brut;
+   free(xi);
+   free(i_cell);
+   free(i_brut);
+   free(d_cell);
+   free(d_brut);
+   free(x);
+   cell_free(cell);
+   brut_free(brut);
    printf("  succeeded!\n");
    return 0;
 }
