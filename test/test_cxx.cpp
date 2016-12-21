@@ -56,8 +56,8 @@ int random_test( int nd, int ni, int no, int nr ) {
          x[k] = (double)rand()/(double)RAND_MAX; 
       }
          
-      int n_cell = cell->knearest( 1, x, no, i_cell, d_cell ); 
-      int n_brut = brut->knearest( 1, x, no, i_brut, d_brut ); 
+      cell->knearest( 1, x, no, i_cell, d_cell ); 
+      brut->knearest( 1, x, no, i_brut, d_brut ); 
 
       for( int l=0; l<no; l++ ) {
          if( i_cell[l] != i_brut[l] ) {

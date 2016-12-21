@@ -1,5 +1,6 @@
 
-![travis-ci](https://travis-ci.org/trifling/closest.svg?branch=master)
+.. image:: https://travis-ci.org/trifling/closest.svg?branch=master
+    :target: https://travis-ci.org/trifling/closest
 
 .. _`is well documented`: http://trifling-matters.com/closest.html
 .. _`GPL-3.0`: https://opensource.org/licenses/GPL-3.0

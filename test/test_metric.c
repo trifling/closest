@@ -26,7 +26,7 @@
 #include <closest.h>
 
 double infnorm( int nd, double *x, double *y, void *data ) {
-   /*double f = *(double *)data;*/
+   (void)data;
    double t = DBL_MIN;
    for( int k=0; k<nd; k++ ) {
       double a = fabs(x[k]-y[k]);

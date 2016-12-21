@@ -20,6 +20,7 @@
 #include <math.h>
 
 double L1metric( int nd, double *x, double *y, void *data ) {
+   (void)data;
    double t = 0.0;
    for( int k=0; k<nd; k++ ) {
       t += fabs(x[k]-y[k]);
@@ -28,6 +29,7 @@ double L1metric( int nd, double *x, double *y, void *data ) {
 }
 
 double L2metric( int nd, double *x, double *y, void *data ) {
+   (void)data;
    double t = 0.0;
    for( int k=0; k<nd; k++ ) {
       double z = ( x[k] - y[k] );
