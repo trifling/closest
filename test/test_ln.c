@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <closest.h>
 
-int random_test( int nd, int ni, int no, int nr ) {
+int random_test( int nd, int ni, int no, int nr, double p ) {
    
    srand(time(NULL));
 
@@ -37,20 +37,18 @@ int random_test( int nd, int ni, int no, int nr ) {
       }
    }
 
-   cull_t *cull = cull_init( nd, ni, xi, 0.9 );
    cell_t *cell = cell_init( nd, ni, xi, 0.0 );
    brut_t *brut = brut_init( nd, ni, xi );
-   tree_t *tree = tree_init( nd, ni, xi, -1 );
 
-   int *i_cull = calloc( no, sizeof(int) );
-   int *i_cell = calloc( no, sizeof(int) );
-   int *i_brut = calloc( no, sizeof(int) );
-   int *i_tree = calloc( no, sizeof(int) );
+   int *i_cell_Lf = calloc( no, sizeof(int) );
+   int *i_brut_Lf = calloc( no, sizeof(int) );
+   int *i_cell_L2 = calloc( no, sizeof(int) );
+   int *i_brut_L2 = calloc( no, sizeof(int) );
    
-   double *d_cull = calloc( no, sizeof(double) );
-   double *d_cell = calloc( no, sizeof(double) );
-   double *d_brut = calloc( no, sizeof(double) );
-   double *d_tree = calloc( no, sizeof(double) );
+   double *d_cell_Lf = calloc( no, sizeof(double) );
+   double *d_brut_Lf = calloc( no, sizeof(double) );
+   double *d_cell_L2 = calloc( no, sizeof(double) );
+   double *d_brut_L2 = calloc( no, sizeof(double) );
 
    double *x = calloc( nd, sizeof(double) );
 
@@ -59,17 +57,24 @@ int random_test( int nd, int ni, int no, int nr ) {
    fflush(stdout);
 
    for( int i=0; i<nr; i++ ) {
+
       for( int k=0; k<nd; k++ ) {
          x[k+i*nd] = (double)rand()/(double)RAND_MAX; 
       }
-         
-      cull_knearest( cull, 1, x, no, i_cull, d_cull ); 
-      cell_knearest( cell, 1, x, no, i_cell, d_cell ); 
-      brut_knearest( brut, 1, x, no, i_brut, d_brut ); 
-      tree_knearest( tree, 1, x, no, i_tree, d_tree ); 
+      
+      brut_set_metric( brut, Lpmetric, &p );
+      brut_knearest( brut, 1, x, no, i_brut_Lf, d_brut_Lf ); 
+      brut_set_metric( brut, NULL, NULL );
+      brut_knearest( brut, 1, x, no, i_brut_L2, d_brut_L2 ); 
+
+      cell_set_metric( cell, Lpmetric, &p );
+      cell_knearest( cell, 1, x, no, i_cell_Lf, d_cell_Lf ); 
+      cell_set_metric( cell, NULL, NULL );
+      cell_knearest( cell, 1, x, no, i_cell_L2, d_cell_L2 ); 
 
       for( int l=0; l<no; l++ ) {
-         if( i_cell[l] != i_brut[l] || i_cull[l] != i_brut[l] || i_tree[l] != i_brut[l] ) {
+         if(    i_cell_Lf[l] != i_brut_Lf[l] 
+             || i_cell_L2[l] != i_brut_L2[l] ) { 
             
             fprintf(stderr,"\n\nERROR at iter i=%u!\n", i );
             fprintf(stderr,"X = ( ");
@@ -78,10 +83,8 @@ int random_test( int nd, int ni, int no, int nr ) {
             fprintf(stderr,")\n");
 
             for( int l=0; l<no; l++ ) {
-               fprintf(stderr, "CULL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cull[l], d_cull[l], xi[0+i_cull[l]*nd], xi[1+i_cull[l]*nd] );
-               fprintf(stderr, "CELL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cell[l], d_cell[l], xi[0+i_cell[l]*nd], xi[1+i_cell[l]*nd] );
-               fprintf(stderr, "BRUT %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_brut[l], d_brut[l], xi[0+i_brut[l]*nd], xi[1+i_brut[l]*nd] );
-               fprintf(stderr, "TREE %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_tree[l], d_tree[l], xi[0+i_tree[l]*nd], xi[1+i_tree[l]*nd] );
+               fprintf(stderr, "CELL %02d -> Lf_i=%02d Lf_d=%f L2_i=%02d L2_d=%f \n", l, i_cell_Lf[l], d_cell_Lf[l], i_cell_L2[l], d_cell_L2[l] );
+               fprintf(stderr, "BRUT %02d -> Lf_i=%02d Lf_d=%f L2_i=%02d L2_d=%f \n", l, i_brut_Lf[l], d_brut_Lf[l], i_brut_L2[l], d_brut_L2[l] );
             }
 
             fprintf(stderr,"Test failed!\n");
@@ -91,31 +94,29 @@ int random_test( int nd, int ni, int no, int nr ) {
    }
 
    free(xi);
-   free(i_cull);
-   free(i_cell);
-   free(i_brut);
-   free(i_tree);
-   free(d_cull);
-   free(d_cell);
-   free(d_brut);
-   free(d_tree);
+   free(i_cell_Lf);
+   free(i_brut_Lf);
+   free(d_cell_Lf);
+   free(d_brut_Lf);
+   free(i_cell_L2);
+   free(i_brut_L2);
+   free(d_cell_L2);
+   free(d_brut_L2);
    free(x);
-   cull_free(cull);
    cell_free(cell);
-   brut_free(brut);
-   tree_free(tree);
    printf("  succeeded!\n");
    return 0;
 }
 
 int main( int argc, char *argv[] ) {
 
-   if( argc < 5 ) {
+   if( argc < 6 ) {
       printf("closest_test nd ni no nr\n");
       printf("  nd - dimensions\n");
       printf("  ni - data points\n");
       printf("  no - number of nearest neighbors to ask for\n");
       printf("  nr - number of times\n");
+      printf("  p  - Distance power Lp \n");
       exit(-1);
    }
 
@@ -123,7 +124,8 @@ int main( int argc, char *argv[] ) {
    int ni = atoi(argv[2]);
    int no = atoi(argv[3]);
    int nr = atoi(argv[4]);
+   double p = atof(argv[5]);
 
-   return random_test( nd, ni, no, nr );
+   return random_test( nd, ni, no, nr, p );
 }
 

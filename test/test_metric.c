@@ -22,7 +22,19 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <float.h>
 #include <closest.h>
+
+double infnorm( int nd, double *x, double *y, void *data ) {
+   (void)data;
+   double t = DBL_MIN;
+   for( int k=0; k<nd; k++ ) {
+      double a = fabs(x[k]-y[k]);
+      if( a > t )
+         t = a;
+   }
+   return t;
+}
 
 int random_test( int nd, int ni, int no, int nr ) {
    
@@ -37,20 +49,14 @@ int random_test( int nd, int ni, int no, int nr ) {
       }
    }
 
-   cull_t *cull = cull_init( nd, ni, xi, 0.9 );
    cell_t *cell = cell_init( nd, ni, xi, 0.0 );
    brut_t *brut = brut_init( nd, ni, xi );
-   tree_t *tree = tree_init( nd, ni, xi, -1 );
 
-   int *i_cull = calloc( no, sizeof(int) );
    int *i_cell = calloc( no, sizeof(int) );
    int *i_brut = calloc( no, sizeof(int) );
-   int *i_tree = calloc( no, sizeof(int) );
    
-   double *d_cull = calloc( no, sizeof(double) );
    double *d_cell = calloc( no, sizeof(double) );
    double *d_brut = calloc( no, sizeof(double) );
-   double *d_tree = calloc( no, sizeof(double) );
 
    double *x = calloc( nd, sizeof(double) );
 
@@ -59,17 +65,19 @@ int random_test( int nd, int ni, int no, int nr ) {
    fflush(stdout);
 
    for( int i=0; i<nr; i++ ) {
+
       for( int k=0; k<nd; k++ ) {
          x[k+i*nd] = (double)rand()/(double)RAND_MAX; 
       }
-         
-      cull_knearest( cull, 1, x, no, i_cull, d_cull ); 
-      cell_knearest( cell, 1, x, no, i_cell, d_cell ); 
+      
+      brut_set_metric( brut, infnorm, NULL );
       brut_knearest( brut, 1, x, no, i_brut, d_brut ); 
-      tree_knearest( tree, 1, x, no, i_tree, d_tree ); 
+
+      cell_set_metric( cell, infnorm, NULL );
+      cell_knearest( cell, 1, x, no, i_cell, d_cell ); 
 
       for( int l=0; l<no; l++ ) {
-         if( i_cell[l] != i_brut[l] || i_cull[l] != i_brut[l] || i_tree[l] != i_brut[l] ) {
+         if(    i_cell[l] != i_brut[l] ) {
             
             fprintf(stderr,"\n\nERROR at iter i=%u!\n", i );
             fprintf(stderr,"X = ( ");
@@ -78,10 +86,8 @@ int random_test( int nd, int ni, int no, int nr ) {
             fprintf(stderr,")\n");
 
             for( int l=0; l<no; l++ ) {
-               fprintf(stderr, "CULL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cull[l], d_cull[l], xi[0+i_cull[l]*nd], xi[1+i_cull[l]*nd] );
-               fprintf(stderr, "CELL %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_cell[l], d_cell[l], xi[0+i_cell[l]*nd], xi[1+i_cell[l]*nd] );
-               fprintf(stderr, "BRUT %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_brut[l], d_brut[l], xi[0+i_brut[l]*nd], xi[1+i_brut[l]*nd] );
-               fprintf(stderr, "TREE %02d -> i=%02d d=%f x=(%f,%f)\n", l, i_tree[l], d_tree[l], xi[0+i_tree[l]*nd], xi[1+i_tree[l]*nd] );
+               fprintf(stderr, "CELL %02d -> i=%02d d=%f\n", l, i_cell[l], d_cell[l] );
+               fprintf(stderr, "BRUT %02d -> i=%02d d=%f\n", l, i_brut[l], d_brut[l] );
             }
 
             fprintf(stderr,"Test failed!\n");
@@ -91,19 +97,13 @@ int random_test( int nd, int ni, int no, int nr ) {
    }
 
    free(xi);
-   free(i_cull);
    free(i_cell);
    free(i_brut);
-   free(i_tree);
-   free(d_cull);
    free(d_cell);
    free(d_brut);
-   free(d_tree);
    free(x);
-   cull_free(cull);
    cell_free(cell);
    brut_free(brut);
-   tree_free(tree);
    printf("  succeeded!\n");
    return 0;
 }
