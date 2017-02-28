@@ -38,7 +38,7 @@ if not lpath:
     except:
         pass
 
-if not lpath or not os.path.isfile(lpath):
+if not lpath:
     raise RuntimeError( 'could not locate the closest library, please set CLOSEST_PATH to the valid location')
 
 _closest = CDLL( lpath )
